@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>Archagon · Server Manager</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+<body>
+  <main class="window">
+    <div class="titlebar" data-tauri-drag-region><span>Archagon</span><div class="window-dots"><i></i><i></i><i></i></div></div>
+    <header class="header">
+      <div class="brand"><div class="logo">A</div><div><h1>Archagon</h1><p>Server Manager</p></div></div>
+      <div class="header-actions">
+        <div class="theme-switch" aria-label="Pilih tema">
+          <button id="lightTheme" title="Light mode">☼</button><button id="darkTheme" title="Dark mode">◐</button>
+        </div>
+        <button id="menuButton" class="menu-button"><span>☰</span> Menu <b>⌄</b></button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <div class="eyebrow">LOCAL DEVELOPMENT</div>
+      <h2>Local servers</h2>
+      <p class="intro">Everything you need to build, right on your machine.</p>
+      <div class="environment"><span>◈</span> Arch Linux · Native stack</div>
+
+      <div class="section-heading"><span>SERVICES</span><span id="runningCount">Checking…</span></div>
+      <section class="service-card">
+        <article class="service-row" data-service="httpd">
+          <button class="toggle" data-toggle="httpd" aria-label="Toggle Apache"><span></span></button>
+          <div class="service-icon apache">⌘</div>
+          <div class="service-name"><strong>Apache</strong><small>Web server · httpd</small></div>
+          <div class="port"><small>PORT</small><strong>80 / 443</strong></div>
+          <div class="status-pill" id="status-httpd"><i></i><span>Checking</span></div>
+          <button class="reload" data-reload="httpd">↻ <span>Reload</span></button>
+        </article>
+        <article class="service-row" data-service="mariadb">
+          <button class="toggle" data-toggle="mariadb" aria-label="Toggle MariaDB"><span></span></button>
+          <div class="service-icon database">◉</div>
+          <div class="service-name"><strong>MariaDB</strong><small>Database server · mariadb</small></div>
+          <div class="port"><small>PORT</small><strong>3306</strong></div>
+          <div class="status-pill" id="status-mariadb"><i></i><span>Checking</span></div>
+          <button class="reload" data-reload="mariadb">↻ <span>Reload</span></button>
+        </article>
+      </section>
+
+    </section>
+
+    <footer class="toolbar">
+      <div class="toolbar-actions">
+        <button id="startAll" class="primary"><span>▶</span> Start All</button>
+        <button id="stopAll" class="secondary"><span>■</span> Stop All</button>
+        <div class="separator"></div>
+        <button data-action="web" class="quick"><span>↗</span> Web</button>
+        <button data-action="database" class="quick"><span>▤</span> Database</button>
+        <button data-action="terminal" class="quick"><span>⌘</span> Terminal</button>
+        <button data-action="root" class="quick"><span>▣</span> Root</button>
+      </div>
+      <div class="footer-line"><span><i id="globalIndicator"></i><span id="message">Ready to start your local environment</span></span><span>Arch Linux&nbsp; • &nbsp;Native services</span></div>
+    </footer>
+  </main>
+
+  <div id="menuPanel" class="menu-panel hidden">
+    <button data-action="web">↗ <span>Open localhost</span></button>
+    <button data-action="database">▤ <span>phpMyAdmin</span></button>
+    <button data-action="root">▣ <span>Open web root</span></button>
+    <button data-action="terminal">⌘ <span>Terminal</span></button>
+    <hr>
+    <button data-config="apache">⚙ <span>httpd.conf</span></button>
+    <button data-config="php">⚙ <span>php.ini</span></button>
+    <button data-config="mariadb">⚙ <span>my.cnf</span></button>
+    <hr>
+    <div class="menu-setting"><div><strong>Auto Virtual Hosts</strong><small>folder → project.test</small></div><label class="switch"><input id="vhostToggle" type="checkbox"><span></span></label></div>
+    <p class="menu-hint">Perlu IncludeOptional di httpd.conf.</p>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script type="module" src="/src/scripts/app.js"></script>
+</body>
+</html>
