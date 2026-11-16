@@ -10,6 +10,11 @@ edition = "2021"
 name = "archagon_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
+[features]
+# Wajib untuk build produksi. Tanpa ini Tauri menganggap build sebagai mode dev
+# dan memuat devUrl (http://127.0.0.1:1420) alih-alih aset UI yang di-embed.
+custom-protocol = ["tauri/custom-protocol"]
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

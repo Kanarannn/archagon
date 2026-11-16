@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="src/assets/archagon-logo.png" alt="Archagon" width="320" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="src/assets/archagon-logo-dark.png">
+    <img src="src/assets/archagon-logo.png" alt="Archagon" width="320" />
+  </picture>
 </p>
 
 # Archagon
@@ -54,6 +57,11 @@ npm run tauri dev
 ```bash
 npm run tauri build
 ```
+
+> **Important:** Always build with the Tauri CLI (`npm run tauri build`). A plain
+> `cargo build --release` does not enable the `custom-protocol` feature, so the
+> resulting binary runs in dev mode and shows
+> `Could not connect to 127.0.0.1: Connection refused` instead of the UI.
 
 The built packages are located in:
 `src-tauri/target/release/bundle/`
