@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="src/assets/archagon-logo.png" alt="Archagon" width="320" />
+</p>
+
 # Archagon
 
 Archagon is a Laragon-inspired desktop server manager for Arch Linux. It controls the native `httpd` and `mariadb` services already installed on your system. Archagon **does not install Apache or MariaDB**.

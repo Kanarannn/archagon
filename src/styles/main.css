@@ -103,12 +103,30 @@ body {
   width: 46px;
   height: 46px;
   border-radius: 12px;
-  background: var(--blue);
+  background: var(--blue-soft);
   display: grid;
   place-items: center;
-  color: white;
-  font-size: 27px;
-  font-weight: 800;
+  overflow: hidden;
+}
+
+.logo img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
+
+.titlebar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.titlebar-brand img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  display: block;
 }
 
 .brand h1 {
@@ -621,6 +639,14 @@ button {
 :root[data-theme="dark"] .menu-button {
   border-color: var(--border);
   background: #222d3d;
+}
+
+:root[data-theme="dark"] .logo img {
+  filter: brightness(1.45) saturate(1.05);
+}
+
+:root[data-theme="dark"] .titlebar-brand img {
+  filter: brightness(1.45) saturate(1.05);
 }
 
 @media (max-width: 850px) {

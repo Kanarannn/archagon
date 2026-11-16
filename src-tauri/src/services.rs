@@ -47,7 +47,11 @@ pub fn stop_all() -> Result<String, String> {
 }
 
 fn validate_service(service: &str) -> Result<&'static str, String> {
-    match service { "httpd" => Ok("httpd"), "mariadb" => Ok("mariadb"), _ => Err("Service tidak diizinkan.".into()) }
+    SERVICES
+        .iter()
+        .copied()
+        .find(|s| *s == service)
+        .ok_or_else(|| "Service tidak diizinkan.".to_string())
 }
 
 #[tauri::command]
