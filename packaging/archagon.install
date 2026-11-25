@@ -1,0 +1,156 @@
+
+#!/bin/bash
+
+_setup_archagon() {
+    local httpd_conf="/etc/httpd/conf/httpd.conf"
+
+    echo "==> Configuring Archagon environment..."
+
+    # Backup Apache configuration once
+    if [[ -f "$httpd_conf" ]]; then
+        cp -an "$httpd_conf" "$httpd_conf.archagon.bak"
+
+        # PHP mod_php requires prefork MPM
+        sed -i -E \
+            -e 's|^[[:space:]]*LoadModule mpm_event_module modules/mod_mpm_event.so[[:space:]]*$|#LoadModule mpm_event_module modules/mod_mpm_event.so|' \
+            -e 's|^[[:space:]]*#[[:space:]]*LoadModule mpm_prefork_module modules/mod_mpm_prefork.so[[:space:]]*$|LoadModule mpm_prefork_module modules/mod_mpm_prefork.so|' \
+            -e 's|^[[:space:]]*LoadModule php_module modules/libphp.so[[:space:]]*$|# Managed by Archagon|' \
+            -e 's|^[[:space:]]*AddHandler php-script \.php[[:space:]]*$|# Managed by Archagon|' \
+            -e 's|^[[:space:]]*Include(Optional)?[[:space:]]+conf/extra/php_module.conf[[:space:]]*$|# Managed by Archagon|' \
+            -e 's|^[[:space:]]*Include(Optional)?[[:space:]]+conf/extra/phpmyadmin.conf[[:space:]]*$|# Managed by Archagon|' \
+            "$httpd_conf"
+
+        # PHP Apache integration
+        if [[ ! -f /etc/httpd/conf/extra/archagon-php.conf ]]; then
+            cat > /etc/httpd/conf/extra/archagon-php.conf <<'EOF'
+LoadModule php_module modules/libphp.so
+AddHandler php-script .php
+
+IncludeOptional conf/extra/php_module.conf
+IncludeOptional conf/extra/archagon-phpmyadmin.conf
+
+ServerName localhost
+EOF
+        fi
+
+        # phpMyAdmin Alias
+        if [[ ! -f /etc/httpd/conf/extra/archagon-phpmyadmin.conf ]]; then
+            cat > /etc/httpd/conf/extra/archagon-phpmyadmin.conf <<'EOF'
+Alias /phpmyadmin "/usr/share/webapps/phpMyAdmin"
+
+<Directory "/usr/share/webapps/phpMyAdmin">
+    DirectoryIndex index.php
+    AllowOverride All
+    Options FollowSymlinks
+    Require local
+</Directory>
+EOF
+        fi
+
+        # Add one managed Include
+        if ! grep -Eq '^[[:space:]]*Include(Optional)?[[:space:]]+conf/extra/archagon-php.conf([[:space:]]|$)' "$httpd_conf"; then
+            printf '\n# Archagon PHP integration\nInclude conf/extra/archagon-php.conf\n' >> "$httpd_conf"
+        fi
+    fi
+
+    # Enable PHP extensions without duplicating already loaded modules
+    mkdir -p /etc/php/conf.d
+    local php_ini="/etc/php/conf.d/archagon.ini"
+    : > "$php_ini"
+
+    for ext in mysqli pdo_mysql iconv; do
+        if ! php -m 2>/dev/null | grep -qi "^${ext}$"; then
+            printf 'extension=%s\n' "$ext" >> "$php_ini"
+        fi
+    done
+
+    # phpMyAdmin temporary directory
+    if id http >/dev/null 2>&1; then
+        install -d -o http -g http -m 700 \
+            /usr/share/webapps/phpMyAdmin/tmp
+    fi
+
+    # Generate a Blowfish secret if none is configured
+    local pma_conf=""
+    for candidate in \
+        /etc/webapps/phpmyadmin/config.inc.php \
+        /usr/share/webapps/phpMyAdmin/config.inc.php
+    do
+        if [[ -f "$candidate" ]]; then
+            pma_conf="$candidate"
+            break
+        fi
+    done
+
+    if [[ -n "$pma_conf" ]]; then
+        cp -an "$pma_conf" "$pma_conf.archagon.bak"
+
+        if ! grep -Eq "blowfish_secret.*[[:alnum:]]{32}" "$pma_conf"; then
+            local secret
+            secret="$(openssl rand -hex 16)"
+            printf "\n\$cfg['blowfish_secret'] = '%s';\n" "$secret" >> "$pma_conf"
+        fi
+    fi
+
+    # Initialize MariaDB only when the data directory is completely empty.
+    # Never overwrite or reinitialize an existing database.
+    if [[ ! -d /var/lib/mysql ]]; then
+        install -d -o mysql -g mysql -m 750 /var/lib/mysql
+    fi
+
+    if [[ ! -d /var/lib/mysql/mysql ]]; then
+        if [[ -z "$(find /var/lib/mysql -mindepth 1 -maxdepth 1 -print -quit)" ]]; then
+            chown mysql:mysql /var/lib/mysql
+
+            echo "==> Initializing fresh MariaDB data directory..."
+
+            mariadb-install-db \
+                --user=mysql \
+                --basedir=/usr \
+                --datadir=/var/lib/mysql \
+                || echo "WARNING: MariaDB initialization failed."
+        else
+            echo "WARNING: MariaDB data directory is not empty."
+            echo "Archagon will not modify existing database files."
+        fi
+    fi
+
+    # Validate and restart Apache only if it is already running
+    if systemctl is-active --quiet httpd; then
+        if apachectl configtest; then
+            systemctl restart httpd || \
+                echo "WARNING: Apache restart failed."
+        else
+            echo "WARNING: Apache configuration needs attention."
+        fi
+    fi
+
+    echo "==> Archagon environment setup finished."
+    echo "==> Apache and MariaDB are not automatically enabled or started."
+}
+
+post_install() {
+    _setup_archagon
+}
+
+post_upgrade() {
+    _setup_archagon
+}
+
+post_remove() {
+    local httpd_conf="/etc/httpd/conf/httpd.conf"
+
+    # Remove only Archagon-managed integration
+    if [[ -f "$httpd_conf" ]]; then
+        sed -i \
+            '/^[[:space:]]*Include conf\/extra\/archagon-php.conf[[:space:]]*$/d' \
+            "$httpd_conf"
+    fi
+
+    rm -f /etc/httpd/conf/extra/archagon-php.conf
+    rm -f /etc/httpd/conf/extra/archagon-phpmyadmin.conf
+    rm -f /etc/php/conf.d/archagon.ini
+
+    echo "Archagon integration files removed."
+    echo "MariaDB data and phpMyAdmin credentials were preserved."
+}
