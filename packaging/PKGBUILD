@@ -1,0 +1,54 @@
+# Maintainer: Archagon
+pkgname=archagon
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Laragon-inspired local development server manager for Arch Linux'
+arch=('x86_64')
+license=('MIT')
+depends=('webkit2gtk-4.1' 'gtk3' 'glibc' 'gcc-libs')
+makedepends=('nodejs' 'npm' 'rust' 'pkgconf')
+optdepends=(
+  'polkit: authentication prompts for service control and virtual hosts'
+  'xdg-utils: open localhost, phpMyAdmin, config files and folders'
+  'httpd: Apache service managed by the app'
+  'mariadb: MariaDB service managed by the app'
+  'php: PHP runtime'
+  'phpmyadmin: phpMyAdmin web UI'
+)
+
+# Builds the checkout one level up (this PKGBUILD lives in packaging/ because
+# makepkg would otherwise use the project's own src/ directory as $srcdir).
+# shortcut: no remote tarball, builds the working tree; add a git source when publishing.
+source=()
+sha256sums=()
+
+prepare() {
+  tar -C "$startdir/.." \
+    --exclude=./node_modules --exclude=./dist \
+    --exclude=./src-tauri/target --exclude=./.git --exclude=./packaging \
+    -cf - . | tar -C "$srcdir" -xf -
+}
+
+build() {
+  cd "$srcdir"
+  npm ci --no-audit --no-fund
+  npm run tauri build -- --no-bundle
+}
+
+package() {
+  cd "$srcdir"
+  install -Dm755 src-tauri/target/release/archagon "$pkgdir/usr/bin/archagon"
+  install -Dm644 src-tauri/icons/icon.png "$pkgdir/usr/share/pixmaps/archagon.png"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -d "$pkgdir/usr/share/applications"
+  cat > "$pkgdir/usr/share/applications/archagon.desktop" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Archagon
+Comment=Local development server manager
+Exec=archagon
+Icon=archagon
+Terminal=false
+Categories=Development;
+EOF
+}
