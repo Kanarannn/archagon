@@ -13,6 +13,7 @@
     <header class="header">
       <div class="brand"><div class="logo"><img src="/src/assets/archagon-icon.png" alt="Archagon" /></div><div><h1>Archagon</h1><p>Server Manager</p></div></div>
       <div class="header-actions">
+        <button id="projectsToggle" class="project-nav">Projects</button>
         <div class="theme-switch" aria-label="Pilih tema">
           <button id="lightTheme" title="Light mode">☼</button><button id="darkTheme" title="Dark mode">◐</button>
         </div>
@@ -21,6 +22,7 @@
     </header>
 
     <section class="workspace">
+      <div id="dashboardView">
       <div class="eyebrow">LOCAL DEVELOPMENT</div>
       <h2>Local servers</h2>
       <p class="intro">Everything you need to build, right on your machine.</p>
@@ -44,6 +46,16 @@
           <div class="status-pill" id="status-mariadb"><i></i><span>Checking</span></div>
           <button class="reload" data-reload="mariadb">↻ <span>Reload</span></button>
         </article>
+      </section>
+      </div>
+
+      <section id="projectsView" class="projects-view hidden" aria-labelledby="projectsTitle">
+        <div class="eyebrow">LOCAL DEVELOPMENT</div>
+        <div class="projects-heading"><div><h2 id="projectsTitle">Projects</h2><p class="intro">Project folders inside /srv/http.</p></div>
+          <div class="project-tools"><label class="project-search"><span class="visually-hidden">Search projects</span><input id="projectSearch" type="search" placeholder="Search projects…"></label>
+            <button id="refreshProjects" class="project-button">↻ Refresh</button><button id="newProject" class="project-button primary">＋ New Project</button></div>
+        </div>
+        <div id="projectList" class="project-list" aria-live="polite"></div>
       </section>
 
     </section>
@@ -74,6 +86,14 @@
     <hr>
     <div class="menu-setting"><div><strong>Auto Virtual Hosts</strong><small>folder → project.test</small></div><label class="switch"><input id="vhostToggle" type="checkbox"><span></span></label></div>
     <p id="vhostNote" class="menu-hint">Perlu IncludeOptional di httpd.conf.</p>
+  </div>
+  <div id="projectModal" class="modal-backdrop hidden">
+    <form id="projectForm" class="project-modal" aria-labelledby="projectModalTitle">
+      <h2 id="projectModalTitle">New Project</h2>
+      <label>Project name<input id="projectName" name="name" required maxlength="50" pattern="[a-z0-9][a-z0-9-]*" autocomplete="off" placeholder="my-project"></label>
+      <label>Starting point<select id="projectKind" name="kind"><option value="blank">Blank project</option><option value="php">PHP (index.php)</option><option value="html">HTML (index.html)</option></select></label>
+      <div class="modal-actions"><button id="cancelProject" class="project-button" type="button">Cancel</button><button class="project-button primary" type="submit">Create Project</button></div>
+    </form>
   </div>
   <div id="toast" class="toast"></div>
   <script type="module" src="/src/scripts/app.js"></script>

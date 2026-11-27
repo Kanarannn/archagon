@@ -14,6 +14,30 @@ fn spawn(program: &str, args: &[&str], cwd: Option<&Path>) -> Result<(), String>
         .map_err(|e| format!("Gagal membuka {program}: {e}"))
 }
 
+pub fn open_terminal(dir: &Path) -> Result<(), String> {
+    if !dir.is_dir() {
+        return Err(format!("Direktori {} tidak ditemukan.", dir.display()));
+    }
+
+    let path = dir.to_string_lossy().into_owned();
+    let candidates = vec![
+        ("kitty", vec!["--directory".into(), path.clone()]),
+        ("foot", vec![format!("--working-directory={path}")]),
+        ("alacritty", vec!["--working-directory".into(), path.clone()]),
+        ("konsole", vec!["--workdir".into(), path.clone()]),
+        ("xfce4-terminal", vec![format!("--working-directory={path}")]),
+        ("xterm", vec!["-e".into(), "bash".into(), "-lc".into(), format!("cd '{}' && exec bash", path.replace('\'', "'\\''"))]),
+    ];
+    for (bin, args) in candidates {
+        let available = Command::new("sh")
+            .args(["-c", "command -v \"$1\" >/dev/null 2>&1", "sh", bin])
+            .status().map(|s| s.success()).unwrap_or(false);
+        let args: Vec<&str> = args.iter().map(String::as_str).collect();
+        if available && spawn(bin, &args, Some(dir)).is_ok() { return Ok(()); }
+    }
+    Err("Terminal tidak ditemukan atau gagal dibuka. Pasang salah satu: kitty, foot, alacritty, konsole, xfce4-terminal, atau xterm.".into())
+}
+
 #[tauri::command]
 pub fn quick_action(action: String) -> Result<String, String> {
     match action.as_str() {
@@ -34,47 +58,7 @@ pub fn quick_action(action: String) -> Result<String, String> {
         }
 
         "terminal" => {
-            let dir = Path::new("/srv/http");
-
-            if !dir.is_dir() {
-                return Err("Direktori /srv/http tidak ditemukan.".into());
-            }
-
-            let candidates: &[(&str, &[&str])] = &[
-                ("kitty", &["--directory", "/srv/http"]),
-                ("foot", &["--working-directory=/srv/http"]),
-                ("alacritty", &["--working-directory", "/srv/http"]),
-                ("konsole", &["--workdir", "/srv/http"]),
-                ("xfce4-terminal", &["--working-directory=/srv/http"]),
-                ("xterm", &["-e", "bash", "-lc", "cd /srv/http && exec bash"]),
-            ];
-
-            let mut opened = false;
-
-            for (bin, args) in candidates {
-                let available = Command::new("sh")
-                    .args([
-                        "-c",
-                        "command -v \"$1\" >/dev/null 2>&1",
-                        "sh",
-                        bin,
-                    ])
-                    .status()
-                    .map(|s| s.success())
-                    .unwrap_or(false);
-
-                if available && spawn(bin, args, Some(dir)).is_ok() {
-                    opened = true;
-                    break;
-                }
-            }
-
-            if !opened {
-                return Err(
-                    "Terminal tidak ditemukan atau gagal dibuka. Pasang salah satu: kitty, foot, alacritty, konsole, xfce4-terminal, atau xterm."
-                        .into(),
-                );
-            }
+            open_terminal(Path::new("/srv/http"))?;
         }
 
         _ => return Err("Quick action tidak dikenal.".into()),

@@ -1,4 +1,5 @@
 mod services;
+mod projects;
 mod system;
 mod vhosts;
 
@@ -14,7 +15,12 @@ pub fn run() {
             services::reload_service,
             system::quick_action,
             system::open_config,
-            vhosts::sync_vhosts
+            vhosts::sync_vhosts,
+            projects::list_projects,
+            projects::create_project,
+            projects::open_project,
+            projects::open_project_folder,
+            projects::open_project_terminal
         ])
         .run(tauri::generate_context!())
         .expect("error while running Archagon");

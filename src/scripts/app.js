@@ -60,6 +60,42 @@ $('#lightTheme').addEventListener('click',()=>setTheme('light'));
 $('#darkTheme').addEventListener('click',()=>setTheme('dark'));
 setTheme(localStorage.getItem('archagon-theme')||'light');
 
+let projects=[];
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderProjects(){
+  const query=$('#projectSearch').value.trim().toLowerCase();
+  const visible=projects.filter(project=>project.name.toLowerCase().includes(query));
+  $('#projectList').innerHTML=visible.length?visible.map(project=>`<article class="project-card"><div class="project-details"><div class="project-title"><strong>${escapeHtml(project.name)}</strong><span class="project-type">${escapeHtml(project.kind)}</span></div><code>${escapeHtml(project.path)}</code></div><div class="project-actions"><button data-project-action="open" data-project="${escapeHtml(project.name)}">↗ Open</button><button data-project-action="terminal" data-project="${escapeHtml(project.name)}">⌘ Terminal</button><button data-project-action="folder" data-project="${escapeHtml(project.name)}">▣ Folder</button></div></article>`).join(''):`<div class="project-empty"><strong>${query?'No matching projects':'No projects found'}</strong><span>${query?'Try another search.':'Create a project or add a folder inside /srv/http.'}</span></div>`;
+}
+async function refreshProjects(){
+  const list=$('#projectList'); list.innerHTML='<div class="project-empty">Scanning /srv/http…</div>';
+  try{projects=await invoke('list_projects');renderProjects();}
+  catch(e){projects=[];list.innerHTML=`<div class="project-empty"><strong>Could not load projects</strong><span>${escapeHtml(e)}</span></div>`;}
+}
+$('#projectsToggle').addEventListener('click',()=>{
+  const showProjects=$('#projectsView').classList.contains('hidden');
+  $('#projectsView').classList.toggle('hidden',!showProjects);$('#dashboardView').classList.toggle('hidden',showProjects);
+  $('#projectsToggle').textContent=showProjects?'Dashboard':'Projects';$('#menuPanel').classList.add('hidden');
+  if(showProjects)refreshProjects();
+});
+$('#refreshProjects').addEventListener('click',refreshProjects);
+$('#projectSearch').addEventListener('input',renderProjects);
+$('#projectList').addEventListener('click',async e=>{
+  const button=e.target.closest('[data-project-action]');if(!button)return;
+  const command={open:'open_project',terminal:'open_project_terminal',folder:'open_project_folder'}[button.dataset.projectAction];
+  try{await invoke(command,{name:button.dataset.project});}
+  catch(error){toast(String(error));}
+});
+$('#newProject').addEventListener('click',()=>{$('#projectModal').classList.remove('hidden');$('#projectName').focus();});
+$('#cancelProject').addEventListener('click',()=>$('#projectModal').classList.add('hidden'));
+$('#projectForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const form=e.currentTarget;const submit=form.querySelector('[type="submit"]');submit.disabled=true;
+  try{await invoke('create_project',{name:$('#projectName').value,kind:$('#projectKind').value});$('#projectModal').classList.add('hidden');form.reset();await refreshProjects();toast('Project created.');}
+  catch(error){toast(String(error));}
+  finally{submit.disabled=false;}
+});
+
 const vhostToggle=$('#vhostToggle');
 vhostToggle.checked=localStorage.getItem('archagon-vhosts')==='true';
 vhostToggle.addEventListener('change',async()=>{
