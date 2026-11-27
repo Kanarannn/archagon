@@ -40,8 +40,12 @@ For GUI actions:
 ```bash
 sudo pacman -S --needed polkit xdg-utils
 ```
+## How to install
 
-The target system is expected to already have `httpd`, `mariadb`, PHP, and phpMyAdmin installed.
+```bash
+cd packaging
+makepkg -si
+```
 
 ## Run in development mode
 
