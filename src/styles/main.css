@@ -244,6 +244,28 @@ button {
   color: var(--blue);
 }
 
+.update-notice {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 13px 15px;
+  border: 1px solid #b9d4ff;
+  border-radius: 11px;
+  background: var(--blue-soft);
+  color: var(--text);
+}
+
+.update-notice.hidden { display: none; }
+.update-notice > div { display: grid; gap: 3px; flex: 1; }
+.update-notice strong { font-size: 13px; }
+.update-notice span { color: var(--muted); font-size: 12px; }
+.update-link { border: 0; padding: 0; background: transparent; color: var(--blue); font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.update-link:hover { text-decoration: underline; }
+.dismiss-update { border: 0; background: transparent; color: var(--muted); font-size: 20px; line-height: 1; }
+
+:root[data-theme="dark"] .update-notice { border-color: #34537b; }
+
 .section-heading {
   display: flex;
   justify-content: space-between;

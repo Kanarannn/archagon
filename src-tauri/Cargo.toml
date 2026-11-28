@@ -1,6 +1,6 @@
 [package]
 name = "archagon"
-version = "0.1.0"
+version = "0.2.0"
 description = "Native local development server manager for Arch Linux"
 authors = ["Archagon"]
 license = "MIT"

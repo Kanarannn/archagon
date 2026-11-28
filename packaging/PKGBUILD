@@ -1,8 +1,8 @@
 
 # Maintainer: Archagon
 pkgname=archagon
-pkgver=0.1.0
-pkgrel=2
+pkgver=0.2.0
+pkgrel=1
 pkgdesc="Laragon-inspired local development server manager for Arch Linux"
 arch=('x86_64')
 url="https://github.com/Kanarannn/archagon"
@@ -50,7 +50,7 @@ optdepends=(
 install=archagon.install
 
 source=(
-    "archagon::git+https://github.com/Kanarannn/archagon.git#commit=9f411a087a0043cdbb068eeed178ff065444d8c4"
+    "archagon::git+https://github.com/Kanarannn/archagon.git#tag=v${pkgver}"
 )
 
 sha256sums=('SKIP')

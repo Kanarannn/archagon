@@ -45,6 +45,10 @@ pub fn quick_action(action: String) -> Result<String, String> {
             spawn("/usr/bin/xdg-open", &["http://localhost"], None)?;
         }
 
+        "releases" => {
+            spawn("/usr/bin/xdg-open", &["https://github.com/Kanarannn/archagon/releases/latest"], None)?;
+        }
+
         "database" => {
             spawn(
                 "/usr/bin/xdg-open",

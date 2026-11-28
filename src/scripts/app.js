@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import appPackage from '../../package.json';
 
 const $ = (s) => document.querySelector(s);
 const state = { httpd:false, mariadb:false, busy:false, busyAction:null };
@@ -59,6 +60,34 @@ function setTheme(theme){document.documentElement.dataset.theme=theme;localStora
 $('#lightTheme').addEventListener('click',()=>setTheme('light'));
 $('#darkTheme').addEventListener('click',()=>setTheme('dark'));
 setTheme(localStorage.getItem('archagon-theme')||'light');
+
+$('#dismissUpdate').addEventListener('click',()=>{
+  localStorage.setItem('archagon-dismissed-update',$('#updateNotice').dataset.version);
+  $('#updateNotice').classList.add('hidden');
+});
+$('#updateLink').addEventListener('click',async()=>{
+  try{await invoke('quick_action',{action:'releases'});}
+  catch(e){toast(String(e));}
+});
+async function checkForUpdate(){
+  try{
+    const response=await fetch('https://api.github.com/repos/Kanarannn/archagon/releases/latest',{headers:{Accept:'application/vnd.github+json'}});
+    if(!response.ok)return;
+    const release=await response.json();
+    const latest=String(release.tag_name||'').replace(/^v/,'');
+    const current=appPackage.version.split('.').map(Number);
+    const available=latest.split('.').map(Number);
+    if(available.length!==3||available.some(Number.isNaN)||current.length!==3)return;
+    const newer=available.some((part,index)=>part>(current[index]||0)&&available.slice(0,index).every((value,i)=>value===current[i]));
+    if(!newer)return;
+    const notice=$('#updateNotice');
+    notice.dataset.version=latest;
+    if(localStorage.getItem('archagon-dismissed-update')===latest)return;
+    $('#updateMessage').textContent=`Versi ${latest} sudah tersedia. Versi yang kamu pakai: ${appPackage.version}.`;
+    notice.classList.remove('hidden');
+  }catch{}
+}
+checkForUpdate();
 
 let projects=[];
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
